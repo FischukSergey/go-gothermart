@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS users
+(
+    id INTEGER PRIMARY KEY,
+    email VARCHAR NOT NULL UNIQUE,
+    password VARCHAR NOT NULL,
+    role VARCHAR,
+    time TIME
+);
+CREATE UNIQUE INDEX IF NOT EXISTS email_idx ON users (email);
