@@ -30,7 +30,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer m.Close()
+	defer func(m *migrate.Migrate) {
+		err, _ := m.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(m)
 	if err := m.Up(); err != nil {
 		if errors.Is(err, migrate.ErrNoChange) {
 			fmt.Println("migration up failed:", err)

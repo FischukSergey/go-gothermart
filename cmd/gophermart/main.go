@@ -2,11 +2,16 @@ package main
 
 import (
 	"fmt"
-	"github.com/go-chi/chi"
+	"github.com/FischukSergey/go-gothermart.git/internal/app/handlers/register"
+	"github.com/FischukSergey/go-gothermart.git/internal/storage"
+	stdlog "log"
 	"log/slog"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/go-chi/chi"
+	"github.com/jackc/pgconn"
 )
 
 const ( //уровни логирования
@@ -21,6 +26,23 @@ func main() {
 	log := setupLogger(FlagLevelLogger) //инициализируем логер с заданным уровнем
 
 	r := chi.NewRouter() //инициализируем роутер и middleware
+
+	var DatabaseDSN *pgconn.Config //инициализируем базу данных
+	DatabaseDSN, err := pgconn.ParseConfig(FlagDatabaseDSN)
+	if err != nil {
+		stdlog.Fatal("Ошибка парсинга строки инициализации БД Postgres")
+	}
+
+	storage, err := storage.NewDB(DatabaseDSN, log)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer storage.DB.Close()
+	log.Info("database connection", slog.String("database", DatabaseDSN.Database))
+
+	//инициализируем хендлеры
+	r.Post("/api/user/register", register.Register(log, storage))
 
 	srv := &http.Server{ //запускаем сервер
 		Addr:         FlagServerPort,
@@ -59,3 +81,17 @@ func setupLogger(env string) *slog.Logger {
 
 	return log
 }
+
+/*
+func setupPrettySlog() *slog.Logger {
+	opts := slogpretty.PrettyHandlerOptions{
+		SlogOpts: &slog.HandlerOptions{
+			Level: slog.LevelDebug,
+		},
+	}
+
+	handler := opts.NewPrettyHandler(os.Stdout)
+
+	return slog.New(handler)
+}
+*/
