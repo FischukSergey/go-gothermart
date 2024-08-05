@@ -3,6 +3,7 @@ package register
 import (
 	"context"
 	"errors"
+	"github.com/FischukSergey/go-gothermart.git/internal/logger"
 	"golang.org/x/crypto/bcrypt"
 	"log/slog"
 	"net/http"
@@ -35,15 +36,15 @@ func Register(log *slog.Logger, storage UserRegister) http.HandlerFunc {
 			Email:    req.Login,
 			Password: req.Password,
 		}
-		/*
-			//проводим валидацию логина и пароля
-			err := u.Validate()
-			if err != nil {
-				log.Error("login or password failure", logger.Err(err))
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			}
-		*/
+
+		//проводим валидацию логина и пароля
+		err := u.Validate()
+		if err != nil {
+			log.Error("login or password failure", logger.Err(err))
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
 		//кодируем пароль
 		passHash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 		if err != nil {
@@ -76,7 +77,7 @@ func Register(log *slog.Logger, storage UserRegister) http.HandlerFunc {
 			return
 		}
 
-		w.WriteHeader(http.StatusCreated)
+		w.WriteHeader(http.StatusOK)
 		_ = id //TODO сделать обработку ID
 	}
 }
