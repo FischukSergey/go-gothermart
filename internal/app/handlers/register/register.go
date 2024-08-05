@@ -89,7 +89,7 @@ func Register(log *slog.Logger, storage UserRegister) http.HandlerFunc {
 		}
 
 		w.WriteHeader(http.StatusOK)
-		w.Header().Set("Authorization", token)
+		w.Header().Add("Authorization", "Bearer"+token)
 		log.Info("user register successfully",
 			slog.String("email", u.Email),
 			slog.String("uid", strconv.Itoa(u.ID)),

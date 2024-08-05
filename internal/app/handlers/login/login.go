@@ -69,7 +69,7 @@ func LoginAuth(log *slog.Logger, storage Loginer) http.HandlerFunc {
 			return
 		}
 		w.WriteHeader(http.StatusOK)
-		w.Header().Set("Authorization", token)
+		w.Header().Add("Authorization", "Bearer"+token)
 		log.Info("user logged successfully",
 			slog.String("email", user.Email),
 			slog.String("uid", strconv.Itoa(user.ID)),

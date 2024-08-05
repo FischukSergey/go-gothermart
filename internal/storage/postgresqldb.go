@@ -13,7 +13,6 @@ import (
 
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgerrcode"
-	_ "github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
@@ -82,6 +81,8 @@ func (db *PostgresqlDB) Register(ctx context.Context, u *models.User) (int, erro
 		return 0, fmt.Errorf("%s: не удалось выполнить запись в базу %w", op, err)
 	}
 	log.Info("Success create user", "email", u.Email)
+
+	//TODO вставить извлечение ID select....
 	return 0, nil
 }
 
