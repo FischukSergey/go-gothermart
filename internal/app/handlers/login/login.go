@@ -84,6 +84,5 @@ func LoginAuth(log *slog.Logger, storage Loginer) http.HandlerFunc {
 			slog.String("uid", strconv.Itoa(user.ID)),
 		)
 		//TODO пишем успех и токен
-		return
 	}
 }

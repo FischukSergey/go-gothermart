@@ -83,14 +83,12 @@ func Register(log *slog.Logger, storage UserRegister) http.HandlerFunc {
 		u.ID = id
 		//создаем токен соединения
 		token, err := jwt.NewToken(*u)
-
 		if err != nil {
 			log.Error("can't create JWToken", logger.Err(err))
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		w.Write([]byte(token))
 		w.Header().Set("Content-Type", "application/json")
 
 		w.Header().Set("Authorization", "Bearer "+token)
@@ -106,6 +104,5 @@ func Register(log *slog.Logger, storage UserRegister) http.HandlerFunc {
 			slog.String("email", u.Email),
 			slog.String("uid", strconv.Itoa(u.ID)),
 		)
-		return
 	}
 }
