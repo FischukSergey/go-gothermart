@@ -14,3 +14,4 @@ migration:
  		--migrations-path=./migrations
 .PHONY: migration
 
+# pg_ctl -D /usr/local/pgsql/data stop/start
