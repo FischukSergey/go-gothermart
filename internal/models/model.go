@@ -9,6 +9,8 @@ type User struct {
 	Email             string
 	Password          string
 	EncryptedPassword string
+	Role              string
+	ID                int
 }
 
 var ErrUserExists = errors.New("user exists")

@@ -2,8 +2,11 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"github.com/FischukSergey/go-gothermart.git/internal/logger"
 	"github.com/FischukSergey/go-gothermart.git/internal/models"
+	"github.com/jackc/pgx/v5"
 	"log/slog"
 	"strconv"
 	"strings"
@@ -55,6 +58,8 @@ func NewDB(dbConfig *pgconn.Config, log *slog.Logger) (*PostgresqlDB, error) {
 	}, nil
 }
 
+// Register() метод принимает логин и пароль, проверяет на уникальность логин,
+// сохранят в таблице users, и возвращает ошибку.
 func (db *PostgresqlDB) Register(ctx context.Context, u *models.User) (int, error) {
 	const op = "postgresql.Register"
 	log := db.logger.With(
@@ -78,4 +83,27 @@ func (db *PostgresqlDB) Register(ctx context.Context, u *models.User) (int, erro
 	}
 	log.Info("Success create user", "email", u.Email)
 	return 0, nil
+}
+
+// Login() метод принимает логин и пароль, проверяет на наличие и возвращает ошибку.
+func (db *PostgresqlDB) Login(ctx context.Context, email string) (*models.User, error) {
+	const op = "postgresql.Register"
+	log := db.logger.With(
+		slog.String("op", op),
+		slog.String("email", email),
+	)
+
+	query := `SELECT email, password, role, id FROM users WHERE email=$1;`
+	user := models.User{}
+	err := db.DB.QueryRow(ctx, query, email).Scan(&user.Email, &user.EncryptedPassword, &user.Role, &user.ID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		log.Error("row not found", "email", email, logger.Err(err))
+		return nil, err
+	}
+	if err != nil {
+		log.Error("unable to execute query", logger.Err(err))
+		return nil, err
+	}
+
+	return &user, nil
 }

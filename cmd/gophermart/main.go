@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/FischukSergey/go-gothermart.git/internal/app/handlers/login"
 	"github.com/FischukSergey/go-gothermart.git/internal/app/handlers/register"
 	"github.com/FischukSergey/go-gothermart.git/internal/storage"
 	stdlog "log"
@@ -43,6 +44,7 @@ func main() {
 
 	//инициализируем хендлеры
 	r.Post("/api/user/register", register.Register(log, storage))
+	r.Post("/api/user/login", login.LoginAuth(log, storage))
 
 	srv := &http.Server{ //запускаем сервер
 		Addr:         FlagServerPort,
