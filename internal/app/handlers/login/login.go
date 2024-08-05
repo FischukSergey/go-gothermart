@@ -63,24 +63,27 @@ func LoginAuth(log *slog.Logger, storage Loginer) http.HandlerFunc {
 
 		//создаем токен соединения
 		token, err := jwt.NewToken(*user)
+
 		if err != nil {
 			log.Error("can't create JWToken", logger.Err(err))
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		w.WriteHeader(http.StatusOK)
-		w.Header().Add("Authorization", "Bearer "+token)
+
+		w.Header().Set("Authorization", "Bearer "+token)
 		cookie := &http.Cookie{
 			Name:    "token",
 			Value:   token,
 			Expires: time.Now().Add(72 * time.Hour),
 		}
 		http.SetCookie(w, cookie)
+		w.WriteHeader(http.StatusOK)
 
 		log.Info("user logged successfully",
 			slog.String("email", user.Email),
 			slog.String("uid", strconv.Itoa(user.ID)),
 		)
 		//TODO пишем успех и токен
+		return
 	}
 }

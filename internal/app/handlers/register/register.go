@@ -26,6 +26,7 @@ func Register(log *slog.Logger, storage UserRegister) http.HandlerFunc {
 		Password string `json:"password"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
+
 		log.Info("registering user")
 
 		req := &request{}
@@ -82,25 +83,29 @@ func Register(log *slog.Logger, storage UserRegister) http.HandlerFunc {
 		u.ID = id
 		//создаем токен соединения
 		token, err := jwt.NewToken(*u)
+
 		if err != nil {
 			log.Error("can't create JWToken", logger.Err(err))
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		w.WriteHeader(http.StatusOK)
-		w.Header().Add("Authorization", "Bearer "+token)
+		w.Write([]byte(token))
+		w.Header().Set("Content-Type", "application/json")
+
+		w.Header().Set("Authorization", "Bearer "+token)
 		cookie := &http.Cookie{
 			Name:    "token",
 			Value:   token,
 			Expires: time.Now().Add(72 * time.Hour),
 		}
 		http.SetCookie(w, cookie)
+		w.WriteHeader(http.StatusOK)
 
 		log.Info("user register successfully",
 			slog.String("email", u.Email),
 			slog.String("uid", strconv.Itoa(u.ID)),
 		)
-
+		return
 	}
 }
