@@ -33,6 +33,22 @@ func NewDB(dbConfig *pgconn.Config, log *slog.Logger) (*PostgresqlDB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%w, unable to create connection db:%s", err, dbConfig.Database)
 	}
+	query := `
+	CREATE TABLE IF NOT EXISTS users
+	  (id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    email VARCHAR NOT NULL UNIQUE,
+    password VARCHAR NOT NULL,
+    role VARCHAR,
+    time TIME);
+	`
+	_, err = db.Exec(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("%w, unable to execute query", err)
+	}
+	_, err = db.Exec(ctx, "CREATE UNIQUE INDEX IF NOT EXISTS email_idx ON users (email);") //создаем уникальный индекс по оригинальному url
+	if err != nil {
+		return nil, fmt.Errorf("%w, unable to create index", err)
+	}
 	return &PostgresqlDB{
 		DB:     db,
 		logger: log,
