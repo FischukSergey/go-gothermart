@@ -3,7 +3,6 @@ package jwtoken
 import (
 	"github.com/FischukSergey/go-gothermart.git/internal/models"
 	"github.com/golang-jwt/jwt/v5"
-	"strconv"
 	"time"
 )
 
@@ -50,11 +49,11 @@ func GetJWTokenUserID(tokenString string) int {
 		return -1
 	}
 
-	userID := claims["uid"].(string)
-	id, err := strconv.Atoi(userID)
-	if err != nil {
-		return -1
-	}
+	userID := claims["uid"].(float64)
+	//id, err := strconv.Atoi(userID)
+	//if err != nil {
+	//	return -1
+	//}
 
-	return id
+	return int(userID) //id
 }
