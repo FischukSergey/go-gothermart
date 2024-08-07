@@ -3,7 +3,7 @@ package register
 import (
 	"context"
 	"errors"
-	"github.com/FischukSergey/go-gothermart.git/internal/lib/jwt"
+	jwtoken "github.com/FischukSergey/go-gothermart.git/internal/lib/jwt"
 	"github.com/FischukSergey/go-gothermart.git/internal/logger"
 	"golang.org/x/crypto/bcrypt"
 	"log/slog"
@@ -82,7 +82,7 @@ func Register(log *slog.Logger, storage UserRegister) http.HandlerFunc {
 
 		u.ID = id
 		//создаем токен соединения
-		token, err := jwt.NewToken(*u)
+		token, err := jwtoken.NewToken(*u)
 		if err != nil {
 			log.Error("can't create JWToken", logger.Err(err))
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -90,8 +90,7 @@ func Register(log *slog.Logger, storage UserRegister) http.HandlerFunc {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-
-		w.Header().Set("Authorization", "Bearer "+token)
+		//w.Header().Set("Authorization", "Bearer "+token)
 		cookie := &http.Cookie{
 			Name:    "token",
 			Value:   token,

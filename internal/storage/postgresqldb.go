@@ -42,6 +42,15 @@ func NewDB(dbConfig *pgconn.Config, log *slog.Logger) (*PostgresqlDB, error) {
     password VARCHAR NOT NULL,
     role VARCHAR,
     time TIME);
+	CREATE TABLE IF NOT EXISTS orders
+		(
+		    id SERIAL PRIMARY KEY,
+		    user_id bigint REFERENCES users (id) NOT NULL,
+		    order_num VARCHAR UNIQUE NOT NULL,
+		    accrual FLOAT DEFAULT 0.0,
+		    order_status VARCHAR NOT NULL,
+		    created_at VARCHAR NOT NULL 
+		);
 	`
 	_, err = db.Exec(ctx, query)
 	if err != nil {
@@ -58,7 +67,7 @@ func NewDB(dbConfig *pgconn.Config, log *slog.Logger) (*PostgresqlDB, error) {
 }
 
 // Register() метод принимает логин и пароль, проверяет на уникальность логин,
-// сохранят в таблице users, и возвращает ошибку.
+// сохранят в таблице users, и возвращает uid и ошибку.
 func (db *PostgresqlDB) Register(ctx context.Context, u *models.User) (int, error) {
 	const op = "postgresql.Register"
 	log := db.logger.With(
@@ -73,17 +82,29 @@ func (db *PostgresqlDB) Register(ctx context.Context, u *models.User) (int, erro
 	if err != nil {
 		//если login неуникальный
 		if strings.Contains(err.Error(), pgerrcode.UniqueViolation) {
-			//БД возвращает ошибку на русском языке. Из-за этого не обрабатывается ошибка. Как исправить не нашел.
+			//БД возвращает ошибку на "русском" языке. Из-за этого не обрабатывается ошибка. Как исправить не нашел.
 			//var pgErr *pgconn.PgError
 			//if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
 			return 0, fmt.Errorf("%s: %w", u.Email, models.ErrUserExists)
 		}
 		return 0, fmt.Errorf("%s: не удалось выполнить запись в базу %w", op, err)
 	}
-	log.Info("Success create user", "email", u.Email)
 
 	//TODO вставить извлечение ID select....
-	return 0, nil
+	queryID := `SELECT id FROM users WHERE email=$1;`
+	var uid int
+	err = db.DB.QueryRow(ctx, queryID, u.Email).Scan(&uid)
+	if errors.Is(err, pgx.ErrNoRows) {
+		log.Error("row not found", "email", u.Email, logger.Err(err))
+		return 0, err
+	}
+	if err != nil {
+		log.Error("unable to execute queryID", logger.Err(err))
+		return 0, err
+	}
+
+	log.Info("Success create user", "email", u.Email)
+	return uid, nil
 }
 
 // Login() метод принимает логин и пароль, проверяет на наличие и возвращает ошибку.

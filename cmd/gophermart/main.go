@@ -3,7 +3,10 @@ package main
 import (
 	"fmt"
 	"github.com/FischukSergey/go-gothermart.git/internal/app/handlers/login"
+	"github.com/FischukSergey/go-gothermart.git/internal/app/handlers/orders"
 	"github.com/FischukSergey/go-gothermart.git/internal/app/handlers/register"
+	"github.com/FischukSergey/go-gothermart.git/internal/app/middleware/auth"
+	mwlogger "github.com/FischukSergey/go-gothermart.git/internal/app/middleware/logger"
 	"github.com/FischukSergey/go-gothermart.git/internal/storage"
 	stdlog "log"
 	"log/slog"
@@ -34,17 +37,23 @@ func main() {
 		stdlog.Fatal("Ошибка парсинга строки инициализации БД Postgres")
 	}
 
-	storage, err := storage.NewDB(DatabaseDSN, log)
+	storageDB, err := storage.NewDB(DatabaseDSN, log)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	defer storage.DB.Close()
+
+	defer storageDB.DB.Close()
 	log.Info("database connection", slog.String("database", DatabaseDSN.Database))
 
+	//инициализируем middleware
+	r.Use(mwlogger.NewMwLogger(log)) //маршрут в middleware за логированием
+	//r.Use(gzipper.NewMwGzipper(log)) //работа со сжатыми запросами/сжатие ответов
+	r.Use(auth.AuthToken(log)) //ID session аутентификация пользователя/JWToken в  cookie
 	//инициализируем хендлеры
-	r.Post("/api/user/register", register.Register(log, storage))
-	r.Post("/api/user/login", login.LoginAuth(log, storage))
+	r.Post("/api/user/register", register.Register(log, storageDB))
+	r.Post("/api/user/login", login.LoginAuth(log, storageDB))
+	r.Post("/api/user/orders", orders.OrderSave(log, storageDB))
 
 	srv := &http.Server{ //запускаем сервер
 		Addr:         FlagServerPort,
