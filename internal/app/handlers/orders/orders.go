@@ -20,7 +20,7 @@ type OrderSaver interface {
 // OrderSave сохранение номера заказа. Пользователь должен быть авторизован.
 func OrderSave(log *slog.Logger, storage OrderSaver) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Info("Saving order")
+		log.Debug("Saving order")
 
 		userID := r.Context().Value(auth.CtxKeyUser).(int)
 		body, err := io.ReadAll(r.Body)

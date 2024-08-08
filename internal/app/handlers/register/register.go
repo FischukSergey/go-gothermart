@@ -27,7 +27,7 @@ func Register(log *slog.Logger, storage UserRegister) http.HandlerFunc {
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		log.Info("registering user")
+		log.Debug("registering user")
 
 		req := &request{}
 		if err := render.Decode(r, req); err != nil {
@@ -39,7 +39,11 @@ func Register(log *slog.Logger, storage UserRegister) http.HandlerFunc {
 			Email:    req.Login,
 			Password: req.Password,
 		}
-
+		if u.Email == "" || u.Password == "" { //не должны быть пустыми
+			w.WriteHeader(http.StatusBadRequest)
+			log.Error("Bad request, login or password empty")
+			return
+		}
 		//проводим валидацию логина и пароля
 		err := u.Validate()
 		if err != nil {

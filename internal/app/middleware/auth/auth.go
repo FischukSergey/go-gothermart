@@ -18,7 +18,7 @@ const (
 func AuthToken(log *slog.Logger) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 
-		log.Info("middleware authorize started")
+		log.Debug("middleware authorize started")
 
 		Authorize := func(w http.ResponseWriter, r *http.Request) {
 			//если api для регистрации или авторизации, то ничего не делаем и передаем дальше

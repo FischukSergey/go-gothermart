@@ -11,7 +11,7 @@ import (
 func NewMwLogger(log *slog.Logger) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 
-		log.Info("middleware logger")
+		log.Debug("middleware logger")
 
 		logFn := func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
