@@ -25,6 +25,10 @@ func (db *PostgresqlDB) GetUserOrders(ctx context.Context, id int) ([]models.Get
 		log.Error("unable to execute query")
 		return orders, fmt.Errorf("unable to execute query: %w", err)
 	}
+	if err = rows.Err(); err != nil {
+		log.Error("rows error")
+		return orders, fmt.Errorf("rows error: %w", err)
+	}
 	defer rows.Close()
 
 	for rows.Next() {
