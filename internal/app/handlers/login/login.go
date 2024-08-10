@@ -23,7 +23,7 @@ func LoginAuth(log *slog.Logger, storage Loginer) http.HandlerFunc {
 		Password string `json:"password"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Info("registering user")
+		log.Debug("registering user")
 
 		req := &request{}
 		if err := render.Decode(r, req); err != nil {

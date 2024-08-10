@@ -1,6 +1,15 @@
 package models
 
-import "errors"
+import (
+	"errors"
+)
+
+const (
+	StatusOrderNew        = "NEW"
+	StatusOrderProcessing = "PROCESSING"
+	StatusOrderInvalid    = "INVALID"
+	StatusOrderProcessed  = "PROCESSED"
+)
 
 type Order struct {
 	ID        int
@@ -9,6 +18,14 @@ type Order struct {
 	Accrual   float32
 	Status    string
 	CreatedAt string
+}
+
+type GetUserOrders struct {
+	Number     string  `json:"number"`
+	Status     string  `json:"status"`
+	Accrual    float32 `json:"accrual,omitempty"`
+	UploadedAt string  `json:"uploaded_at"`
+	//Error      string  `json:"error,omitempty"`
 }
 
 var ErrOrderExists = errors.New("order exists")

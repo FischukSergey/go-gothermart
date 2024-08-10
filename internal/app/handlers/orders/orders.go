@@ -44,7 +44,7 @@ func OrderSave(log *slog.Logger, storage OrderSaver) http.HandlerFunc {
 		order := models.Order{
 			UserID:    userID,
 			OrderID:   string(body),
-			Status:    "NEW",
+			Status:    models.StatusOrderNew,
 			CreatedAt: time.Now().Format(time.RFC3339),
 		}
 

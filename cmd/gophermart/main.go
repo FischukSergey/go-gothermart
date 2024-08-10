@@ -5,6 +5,7 @@ import (
 	"github.com/FischukSergey/go-gothermart.git/internal/app/handlers/login"
 	"github.com/FischukSergey/go-gothermart.git/internal/app/handlers/orders"
 	"github.com/FischukSergey/go-gothermart.git/internal/app/handlers/register"
+	"github.com/FischukSergey/go-gothermart.git/internal/app/handlers/userorders"
 	"github.com/FischukSergey/go-gothermart.git/internal/app/middleware/auth"
 	mwlogger "github.com/FischukSergey/go-gothermart.git/internal/app/middleware/logger"
 	"github.com/FischukSergey/go-gothermart.git/internal/storage"
@@ -54,6 +55,7 @@ func main() {
 	r.Post("/api/user/register", register.Register(log, storageDB))
 	r.Post("/api/user/login", login.LoginAuth(log, storageDB))
 	r.Post("/api/user/orders", orders.OrderSave(log, storageDB))
+	r.Get("/api/user/orders", userorders.UserOrders(log, storageDB))
 
 	srv := &http.Server{ //запускаем сервер
 		Addr:         FlagServerPort,
@@ -72,6 +74,7 @@ func main() {
 
 }
 
+// setupLogger() настройка уровня доступа к логам из переменной среды
 func setupLogger(env string) *slog.Logger {
 	var log *slog.Logger
 

@@ -15,7 +15,7 @@ type User struct {
 
 var ErrUserExists = errors.New("user exists")
 
-// Validate валидация логина и пароля
+// Validate() валидация логина и пароля
 func (u *User) Validate() error {
 	return validation.ValidateStruct(
 		u,
