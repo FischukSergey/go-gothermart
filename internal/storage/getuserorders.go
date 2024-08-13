@@ -44,6 +44,6 @@ func (db *PostgresqlDB) GetUserOrders(ctx context.Context, id int) ([]models.Get
 		return orders, fmt.Errorf("scan query error: %w", err)
 	}
 
-	log.Info("selected orders successfully", orders)
+	log.Info("selected orders successfully")
 	return orders, nil
 }
