@@ -118,7 +118,12 @@ func processedAccrual(ctx context.Context, workPool chan struct{}, order string,
 			closeBody(res.Body, log)
 			return
 		}
-		closeBody(res.Body, log)
+
+		err = res.Body.Close()
+		if err != nil {
+			log.Error("error close body GET", "err", err)
+		}
+
 	}
 }
 
