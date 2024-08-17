@@ -42,6 +42,14 @@ func (db *PostgresqlDB) CreateOrderWithdraw(ctx context.Context, order models.Or
 	row = db.DB.QueryRow(ctx, "SELECT balance FROM users WHERE id=$1", order.UserID)
 	var balance float32
 	err = row.Scan(&balance)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			log.Info("no balance for user", order.UserID)
+			return errors.New("no balance for user")
+		}
+		log.Error("error scanning row", slog.String("error", err.Error()))
+		return err
+	}
 
 	//проверяем достаточность средств и делаем запись
 	switch balance >= order.Withdraw {

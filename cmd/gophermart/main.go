@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"github.com/FischukSergey/go-gothermart.git/internal/app/handlers/balance"
 	"github.com/FischukSergey/go-gothermart.git/internal/app/handlers/login"
 	"github.com/FischukSergey/go-gothermart.git/internal/app/handlers/orders"
 	"github.com/FischukSergey/go-gothermart.git/internal/app/handlers/register"
@@ -9,6 +11,8 @@ import (
 	"github.com/FischukSergey/go-gothermart.git/internal/app/handlers/withdraw"
 	"github.com/FischukSergey/go-gothermart.git/internal/app/middleware/auth"
 	mwlogger "github.com/FischukSergey/go-gothermart.git/internal/app/middleware/logger"
+	"github.com/FischukSergey/go-gothermart.git/internal/app/services"
+	"github.com/FischukSergey/go-gothermart.git/internal/models"
 	"github.com/FischukSergey/go-gothermart.git/internal/storage"
 	stdlog "log"
 	"log/slog"
@@ -52,16 +56,17 @@ func main() {
 	r.Use(mwlogger.NewMwLogger(log)) //маршрут в middleware за логированием
 	//r.Use(gzipper.NewMwGzipper(log)) //работа со сжатыми запросами/сжатие ответов
 	r.Use(auth.AuthToken(log)) //ID session аутентификация пользователя/JWToken в  cookie
+
 	//инициализируем хендлеры
 	r.Post("/api/user/register", register.Register(log, storageDB))
 	r.Post("/api/user/login", login.LoginAuth(log, storageDB))
 	r.Post("/api/user/balance/withdraw", withdraw.OrderWithdraw(log, storageDB))
 	r.Post("/api/user/orders", orders.OrderSave(log, storageDB))
 	r.Get("/api/user/orders", userorders.UserOrders(log, storageDB))
-	//r.Get("/api/user/balance",)
+	r.Get("/api/user/balance", balance.GetBalance(log, storageDB))
 
 	//инициализируем сервис и сервер расчета баллов (accrual)
-	/*ctx := context.Background()
+	ctx := context.Background()
 	accrual := models.Accrual{
 		MaxWorker:            3,
 		TimeTicker:           5,
@@ -69,7 +74,7 @@ func main() {
 		AccrualServerAddress: FlagAccrualSystemAddress,
 	}
 	go services.AccrualService(ctx, accrual, storageDB, log)
-	*/
+
 	srv := &http.Server{ //запускаем сервер
 		Addr:         FlagServerPort,
 		Handler:      r,
