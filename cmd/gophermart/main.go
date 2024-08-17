@@ -9,6 +9,7 @@ import (
 	"github.com/FischukSergey/go-gothermart.git/internal/app/handlers/register"
 	"github.com/FischukSergey/go-gothermart.git/internal/app/handlers/userorders"
 	"github.com/FischukSergey/go-gothermart.git/internal/app/handlers/withdraw"
+	"github.com/FischukSergey/go-gothermart.git/internal/app/handlers/withdrawals"
 	"github.com/FischukSergey/go-gothermart.git/internal/app/middleware/auth"
 	mwlogger "github.com/FischukSergey/go-gothermart.git/internal/app/middleware/logger"
 	"github.com/FischukSergey/go-gothermart.git/internal/app/services"
@@ -64,6 +65,7 @@ func main() {
 	r.Post("/api/user/orders", orders.OrderSave(log, storageDB))
 	r.Get("/api/user/orders", userorders.UserOrders(log, storageDB))
 	r.Get("/api/user/balance", balance.GetBalance(log, storageDB))
+	r.Get("/api/user/withdrawals", withdrawals.OrderWithdrawAll(log, storageDB))
 
 	//инициализируем сервис и сервер расчета баллов (accrual)
 	ctx := context.Background()

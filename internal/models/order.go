@@ -29,6 +29,12 @@ type GetUserOrders struct {
 	//Error      string  `json:"error,omitempty"`
 }
 
+type GetAllWithdraw struct {
+	Order       string  `json:"order"`
+	Sum         float32 `json:"sum"`
+	ProcessedAt string  `json:"processed_at"`
+}
+
 var ErrOrderExists = errors.New("order exists")
 var ErrInsufficientFunds = errors.New("insufficient funds")
 var ErrOrderInvalid = errors.New("order invalid")

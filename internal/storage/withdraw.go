@@ -7,6 +7,7 @@ import (
 	"github.com/FischukSergey/go-gothermart.git/internal/models"
 	"github.com/jackc/pgx/v5"
 	"log/slog"
+	"strconv"
 )
 
 // CreateOrderWithdraw добавление новой записи(ордера) заказа на списание баллов
@@ -101,4 +102,45 @@ func (db *PostgresqlDB) CreateOrderWithdraw(ctx context.Context, order models.Or
 
 	log.Info("order withdraw has been created successfully")
 	return nil
+}
+
+// GetAllWithdraw возвращает все заказы сделанные пользователем id
+func (db *PostgresqlDB) GetAllWithdraw(ctx context.Context, userID int) ([]models.GetAllWithdraw, error) {
+	const op = "storage.GetAllWithdraw"
+	log := db.logger.With(
+		slog.String("op", op),
+		slog.String("user", strconv.Itoa(userID)),
+	)
+
+	var orders []models.GetAllWithdraw
+
+	query := `SELECT order_num, withdraw, created_at FROM orders
+		WHERE user_id = $1 ORDER BY created_at DESC;`
+
+	rows, err := db.DB.Query(ctx, query, userID)
+	if err != nil {
+		log.Error("unable to execute query")
+		return orders, fmt.Errorf("unable to execute query: %w", err)
+	}
+	if err = rows.Err(); err != nil {
+		log.Error("rows error")
+		return orders, fmt.Errorf("rows error: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var row models.GetAllWithdraw
+		err = rows.Scan(&row.Order, &row.Sum, &row.ProcessedAt)
+		if err != nil {
+			log.Error("unable to read row of query")
+			return orders, fmt.Errorf("unable to read row of query: %w", err)
+		}
+		orders = append(orders, row)
+	}
+	if err := rows.Err(); err != nil {
+		return orders, fmt.Errorf("scan query error: %w", err)
+	}
+
+	log.Info("selected orders withdraw successfully")
+	return orders, nil
 }
