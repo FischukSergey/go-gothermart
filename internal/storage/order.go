@@ -11,7 +11,7 @@ import (
 
 // CreateOrder() добавление новой записи заказа (ордера)
 func (db *PostgresqlDB) CreateOrder(ctx context.Context, order models.Order) error {
-	const op = "postgresql.Register"
+	const op = "postgresql.CreatOrder"
 	log := db.logger.With(
 		slog.String("op", op),
 		slog.String("order", order.OrderID),

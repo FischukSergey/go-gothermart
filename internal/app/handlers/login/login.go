@@ -24,6 +24,7 @@ func LoginAuth(log *slog.Logger, storage Loginer) http.HandlerFunc {
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Debug("registering user")
+		defer log.Debug("registered user finished")
 
 		req := &request{}
 		if err := render.Decode(r, req); err != nil {

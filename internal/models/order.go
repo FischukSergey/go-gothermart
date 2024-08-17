@@ -16,6 +16,7 @@ type Order struct {
 	UserID    int
 	OrderID   string
 	Accrual   float32
+	Withdraw  float32
 	Status    string
 	CreatedAt string
 }
@@ -29,7 +30,7 @@ type GetUserOrders struct {
 }
 
 var ErrOrderExists = errors.New("order exists")
-var ErrOrderNotFound = errors.New("order not found")
+var ErrInsufficientFunds = errors.New("insufficient funds")
 var ErrOrderInvalid = errors.New("order invalid")
 var ErrOrderUploadedSameUser = errors.New("order already loaded same user")
 var ErrOrderUploadedAnotherUser = errors.New("order loaded another user")

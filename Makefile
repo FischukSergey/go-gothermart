@@ -18,4 +18,12 @@ accrual:
 	./cmd/accrual/accrual_darwin_arm64 -a=localhost:8082
 .PHONY: accrual
 
-# pg_ctl -D /usr/local/pgsql/data stop/start
+startdb:
+	@echo "Running PostgreSQL"
+	pg_ctl -D /usr/local/pgsql/data start
+.PHONY: startdb
+
+stopdb:
+	@echo "Stop PostgreSQL"
+	pg_ctl -D /usr/local/pgsql/data stop
+.PHONY: stopdb

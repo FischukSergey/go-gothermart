@@ -1,16 +1,14 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"github.com/FischukSergey/go-gothermart.git/internal/app/handlers/login"
 	"github.com/FischukSergey/go-gothermart.git/internal/app/handlers/orders"
 	"github.com/FischukSergey/go-gothermart.git/internal/app/handlers/register"
 	"github.com/FischukSergey/go-gothermart.git/internal/app/handlers/userorders"
+	"github.com/FischukSergey/go-gothermart.git/internal/app/handlers/withdraw"
 	"github.com/FischukSergey/go-gothermart.git/internal/app/middleware/auth"
 	mwlogger "github.com/FischukSergey/go-gothermart.git/internal/app/middleware/logger"
-	"github.com/FischukSergey/go-gothermart.git/internal/app/services"
-	"github.com/FischukSergey/go-gothermart.git/internal/models"
 	"github.com/FischukSergey/go-gothermart.git/internal/storage"
 	stdlog "log"
 	"log/slog"
@@ -57,11 +55,13 @@ func main() {
 	//инициализируем хендлеры
 	r.Post("/api/user/register", register.Register(log, storageDB))
 	r.Post("/api/user/login", login.LoginAuth(log, storageDB))
+	r.Post("/api/user/balance/withdraw", withdraw.OrderWithdraw(log, storageDB))
 	r.Post("/api/user/orders", orders.OrderSave(log, storageDB))
 	r.Get("/api/user/orders", userorders.UserOrders(log, storageDB))
+	//r.Get("/api/user/balance",)
 
 	//инициализируем сервис и сервер расчета баллов (accrual)
-	ctx := context.Background()
+	/*ctx := context.Background()
 	accrual := models.Accrual{
 		MaxWorker:            3,
 		TimeTicker:           5,
@@ -69,7 +69,7 @@ func main() {
 		AccrualServerAddress: FlagAccrualSystemAddress,
 	}
 	go services.AccrualService(ctx, accrual, storageDB, log)
-
+	*/
 	srv := &http.Server{ //запускаем сервер
 		Addr:         FlagServerPort,
 		Handler:      r,

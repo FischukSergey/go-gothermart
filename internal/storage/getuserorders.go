@@ -8,6 +8,7 @@ import (
 	"strconv"
 )
 
+// GetUserOrders() возвращает все заказы сделанные пользователем id
 func (db *PostgresqlDB) GetUserOrders(ctx context.Context, id int) ([]models.GetUserOrders, error) {
 	const op = "storage.GetUserOrders"
 	log := db.logger.With(

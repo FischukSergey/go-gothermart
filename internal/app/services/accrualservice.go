@@ -11,11 +11,18 @@ import (
 	"time"
 )
 
-type AccrualServices interface {
-	GetAccrualOrders(ctx context.Context) ([]string, error)
-	UpdateAccrualOrder(ctx context.Context, accrualOrder models.AccrualOrder) error
+type OrderUpdate struct { //структура для массива новых записей с id пользователя
+	OrderID string
+	UserID  int
 }
 
+type AccrualServices interface {
+	GetAccrualOrders(ctx context.Context) ([]OrderUpdate, error)
+	UpdateAccrualOrder(ctx context.Context, accrualOrder models.AccrualOrder, userID int) error
+}
+
+// AccrualService в фоновом режиме проводит запросы к микросервису начисления баллов лояльности
+// и обновляет данные в основном сервисе заказов
 func AccrualService(ctx context.Context, accrual models.Accrual, storage AccrualServices, log *slog.Logger) {
 	workPool := make(chan struct{}, accrual.MaxWorker)
 	defer close(workPool)
@@ -28,7 +35,7 @@ func AccrualService(ctx context.Context, accrual models.Accrual, storage Accrual
 	for {
 		select {
 		case <-ticker.C:
-			var orders []string
+			var orders []OrderUpdate
 			orders, err := storage.GetAccrualOrders(ctx) //запрос в БД за слайсом необработанных заказов
 			if err != nil {
 				log.Error("Failed to get accrual orders", "error", err)
@@ -38,7 +45,7 @@ func AccrualService(ctx context.Context, accrual models.Accrual, storage Accrual
 			}
 			for _, order := range orders {
 				workPool <- struct{}{}
-				log.Info("Getting orders status and accrual for order " + order)
+				log.Info("Getting orders status and accrual for order " + order.OrderID)
 				go processedAccrual(ctx, workPool, order, storage, log, accrual)
 			}
 		case <-ctx.Done():
@@ -47,12 +54,12 @@ func AccrualService(ctx context.Context, accrual models.Accrual, storage Accrual
 	}
 }
 
-func processedAccrual(ctx context.Context, workPool chan struct{}, order string,
+func processedAccrual(ctx context.Context, workPool chan struct{}, order OrderUpdate,
 	storage AccrualServices, log *slog.Logger, accrual models.Accrual) {
 	defer func() {
-		<-workPool //освобождаем горутину по завершению работы функции
+		<-workPool //освобождаем буфер для запуска следующей горутины по завершению работы функции
 	}()
-	uri := accrual.AccrualServerAddress + "/api/orders/" + order
+	uri := accrual.AccrualServerAddress + "/api/orders/" + order.OrderID
 
 	for retries := accrual.MaxRetries; retries > 0; retries-- { //делаем несколько попыток получить данные о заказе
 		res, err := http.Get(uri)
@@ -69,7 +76,7 @@ func processedAccrual(ctx context.Context, workPool chan struct{}, order string,
 			continue
 
 		case http.StatusNoContent:
-			log.Info("accrual service http no content", "order", order)
+			log.Info("accrual service http no content", "order", order.OrderID)
 			closeBody(res.Body, log)
 			return
 
@@ -90,7 +97,6 @@ func processedAccrual(ctx context.Context, workPool chan struct{}, order string,
 			continue
 
 		case http.StatusOK:
-			//todo записать новый статус в БД
 			var updatedOrderStatus models.AccrualOrder
 			if err := render.DecodeJSON(res.Body, &updatedOrderStatus); err != nil {
 				log.Error("error unmarshal accrual order status", "err", err)
@@ -99,7 +105,7 @@ func processedAccrual(ctx context.Context, workPool chan struct{}, order string,
 			}
 			if updatedOrderStatus.Status == models.StatusOrderProcessed ||
 				updatedOrderStatus.Status == models.StatusOrderInvalid { //если обработка заказа окончена
-				err := storage.UpdateAccrualOrder(ctx, updatedOrderStatus) //пишем в БД
+				err := storage.UpdateAccrualOrder(ctx, updatedOrderStatus, order.UserID) //пишем в БД
 				if err != nil {
 					log.Error("error update accrual order status", "err", err)
 					closeBody(res.Body, log)

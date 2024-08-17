@@ -41,6 +41,7 @@ func NewDB(dbConfig *pgconn.Config, log *slog.Logger) (*PostgresqlDB, error) {
     email VARCHAR NOT NULL UNIQUE,
     password VARCHAR NOT NULL,
     role VARCHAR,
+    balance FLOAT DEFAULT 0.0,
     time TIME);
 	CREATE TABLE IF NOT EXISTS orders
 		(
@@ -48,6 +49,7 @@ func NewDB(dbConfig *pgconn.Config, log *slog.Logger) (*PostgresqlDB, error) {
 		    user_id bigint REFERENCES users (id) NOT NULL,
 		    order_num VARCHAR UNIQUE NOT NULL,
 		    accrual FLOAT DEFAULT 0.0,
+		    withdraw FLOAT DEFAULT 0.0,
 		    order_status VARCHAR NOT NULL,
 		    created_at VARCHAR NOT NULL 
 		);
