@@ -11,14 +11,18 @@ import (
 	"github.com/FischukSergey/go-gothermart.git/internal/app/handlers/withdraw"
 	"github.com/FischukSergey/go-gothermart.git/internal/app/handlers/withdrawals"
 	"github.com/FischukSergey/go-gothermart.git/internal/app/middleware/auth"
+	"github.com/FischukSergey/go-gothermart.git/internal/app/middleware/gzipper"
 	mwlogger "github.com/FischukSergey/go-gothermart.git/internal/app/middleware/logger"
 	"github.com/FischukSergey/go-gothermart.git/internal/app/services"
+	"github.com/FischukSergey/go-gothermart.git/internal/logger"
 	"github.com/FischukSergey/go-gothermart.git/internal/models"
 	"github.com/FischukSergey/go-gothermart.git/internal/storage"
 	stdlog "log"
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -55,8 +59,8 @@ func main() {
 
 	//инициализируем middleware
 	r.Use(mwlogger.NewMwLogger(log)) //маршрут в middleware за логированием
-	//r.Use(gzipper.NewMwGzipper(log)) //работа со сжатыми запросами/сжатие ответов
-	r.Use(auth.AuthToken(log)) //ID session аутентификация пользователя/JWToken в  cookie
+	r.Use(gzipper.NewMwGzipper(log)) //работа со сжатыми запросами/сжатие ответов
+	r.Use(auth.AuthToken(log))       //ID session аутентификация пользователя/JWToken в  cookie
 
 	//инициализируем хендлеры
 	r.Post("/api/user/register", register.Register(log, storageDB))
@@ -85,13 +89,30 @@ func main() {
 		IdleTimeout:  30 * time.Second,
 	}
 
-	log.Info("Initializing server", slog.String("address", srv.Addr))
+	log.Info("Initializing server")
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
-	if err := srv.ListenAndServe(); err != nil {
-		fmt.Printf("Ошибка при запуске сервера: %s", err.Error())
+	go func() {
+		if err := srv.ListenAndServe(); err != nil {
+			log.Error("Ошибка при запуске сервера", logger.Err(err))
+			return
+		}
+	}()
+
+	log.Info("Server started", slog.String("address", srv.Addr))
+
+	<-done
+
+	log.Info("Server stopping", slog.String("address", srv.Addr))
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Error("failed to stop server", logger.Err(err))
 		return
 	}
 
+	// TODO: close storage. Разобраться!
+
+	log.Info("server stopped")
 }
 
 // setupLogger() настройка уровня доступа к логам из переменной среды
@@ -129,7 +150,3 @@ func setupPrettySlog() *slog.Logger {
 	return slog.New(handler)
 }
 */
-
-func shutDown() {
-	//TODO остановить ticker послать ctx cansel
-}

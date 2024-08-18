@@ -49,6 +49,7 @@ func AccrualService(ctx context.Context, accrual models.Accrual, storage Accrual
 				go processedAccrual(ctx, workPool, order, storage, log, accrual)
 			}
 		case <-ctx.Done():
+			log.Info("Accrual service shutting down")
 			return
 		}
 	}
