@@ -11,6 +11,7 @@ import (
 	"github.com/FischukSergey/go-gothermart.git/internal/app/handlers/withdraw"
 	"github.com/FischukSergey/go-gothermart.git/internal/app/handlers/withdrawals"
 	"github.com/FischukSergey/go-gothermart.git/internal/app/middleware/auth"
+	"github.com/FischukSergey/go-gothermart.git/internal/app/middleware/gzipper"
 	mwlogger "github.com/FischukSergey/go-gothermart.git/internal/app/middleware/logger"
 	"github.com/FischukSergey/go-gothermart.git/internal/app/services"
 	"github.com/FischukSergey/go-gothermart.git/internal/logger"
@@ -58,8 +59,8 @@ func main() {
 
 	//инициализируем middleware
 	r.Use(mwlogger.NewMwLogger(log)) //маршрут в middleware за логированием
-	//r.Use(gzipper.NewMwGzipper(log)) //работа со сжатыми запросами/сжатие ответов
-	r.Use(auth.AuthToken(log)) //ID session аутентификация пользователя/JWToken в  cookie
+	r.Use(gzipper.NewMwGzipper(log)) //работа со сжатыми запросами/сжатие ответов
+	r.Use(auth.AuthToken(log))       //ID session аутентификация пользователя/JWToken в  cookie
 
 	//инициализируем хендлеры
 	r.Post("/api/user/register", register.Register(log, storageDB))
