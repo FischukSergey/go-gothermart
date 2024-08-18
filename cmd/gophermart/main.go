@@ -40,7 +40,7 @@ func main() {
 	ParseFlags()                        //инициализируем флаги/переменные окружения конфигурации сервера
 	log := setupLogger(FlagLevelLogger) //инициализируем логер с заданным уровнем
 
-	r := chi.NewRouter() //инициализируем роутер и middleware
+	rout := chi.NewRouter() //инициализируем роутер и middleware
 
 	var DatabaseDSN *pgconn.Config //инициализируем базу данных
 	DatabaseDSN, err := pgconn.ParseConfig(FlagDatabaseDSN)
@@ -57,19 +57,21 @@ func main() {
 	defer storageDB.DB.Close()
 	log.Info("database connection", slog.String("database", DatabaseDSN.Database))
 
-	//инициализируем middleware
-	r.Use(mwlogger.NewMwLogger(log)) //маршрут в middleware за логированием
-	r.Use(gzipper.NewMwGzipper(log)) //работа со сжатыми запросами/сжатие ответов
-	r.Use(auth.AuthToken(log))       //ID session аутентификация пользователя/JWToken в  cookie
+	rout.Route("/api/user", func(r chi.Router) {
+		//инициализируем middleware
+		r.Use(mwlogger.NewMwLogger(log)) //маршрут в middleware за логированием
+		r.Use(gzipper.NewMwGzipper(log)) //работа со сжатыми запросами/сжатие ответов
+		r.Use(auth.AuthToken(log))       //ID session аутентификация пользователя/JWToken в  cookie
 
-	//инициализируем хендлеры
-	r.Post("/api/user/register", register.Register(log, storageDB))
-	r.Post("/api/user/login", login.LoginAuth(log, storageDB))
-	r.Post("/api/user/balance/withdraw", withdraw.OrderWithdraw(log, storageDB))
-	r.Post("/api/user/orders", orders.OrderSave(log, storageDB))
-	r.Get("/api/user/orders", userorders.UserOrders(log, storageDB))
-	r.Get("/api/user/balance", balance.GetBalance(log, storageDB))
-	r.Get("/api/user/withdrawals", withdrawals.OrderWithdrawAll(log, storageDB))
+		//инициализируем хендлеры
+		r.Post("/register", register.Register(log, storageDB))
+		r.Post("/login", login.LoginAuth(log, storageDB))
+		r.Post("/balance/withdraw", withdraw.OrderWithdraw(log, storageDB))
+		r.Post("/orders", orders.OrderSave(log, storageDB))
+		r.Get("/orders", userorders.UserOrders(log, storageDB))
+		r.Get("/balance", balance.GetBalance(log, storageDB))
+		r.Get("/withdrawals", withdrawals.OrderWithdrawAll(log, storageDB))
+	})
 
 	//инициализируем сервис и сервер расчета баллов (accrual)
 	ctx := context.Background()
@@ -83,7 +85,7 @@ func main() {
 
 	srv := &http.Server{ //запускаем сервер
 		Addr:         FlagServerPort,
-		Handler:      r,
+		Handler:      rout,
 		ReadTimeout:  4 * time.Second,
 		WriteTimeout: 4 * time.Second,
 		IdleTimeout:  30 * time.Second,
