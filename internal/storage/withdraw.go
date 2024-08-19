@@ -19,10 +19,22 @@ func (db *PostgresqlDB) CreateOrderWithdraw(ctx context.Context, order models.Or
 		slog.String("order", order.OrderID),
 	)
 
+	tx, err := db.DB.Begin(ctx) //открываем транзакцию изменения таблиц
+	if err != nil {
+		log.Error("unable to begin transaction")
+		return fmt.Errorf("%w", err)
+	}
+	defer func(tx pgx.Tx, ctx context.Context) {
+		err := tx.Rollback(ctx)
+		if err != nil {
+			log.Error("unable to rollback transaction to create withdraw")
+		}
+	}(tx, ctx)
+
 	//проверка на уже существующий в базе номер заказа
 	row := db.DB.QueryRow(ctx, "SELECT user_id, order_num FROM orders WHERE order_num=$1", order.OrderID)
 	var useOrder models.Order
-	err := row.Scan(
+	err = row.Scan(
 		&useOrder.UserID,
 		&useOrder.OrderID,
 	)
@@ -56,11 +68,7 @@ func (db *PostgresqlDB) CreateOrderWithdraw(ctx context.Context, order models.Or
 	switch balance >= order.Withdraw {
 
 	case true: //если средств достаточно
-		tx, err := db.DB.Begin(ctx) //открываем транзакцию изменения таблиц
-		if err != nil {
-			log.Error("unable to begin transaction")
-			return fmt.Errorf("%w", err)
-		}
+
 		query := `INSERT INTO orders (user_id, order_num, order_status, created_at, withdraw)
 			VALUES ($1, $2, $3, $4, $5);`
 		_, err = tx.Exec(ctx, query,
@@ -70,22 +78,12 @@ func (db *PostgresqlDB) CreateOrderWithdraw(ctx context.Context, order models.Or
 			order.CreatedAt,
 			order.Withdraw)
 		if err != nil {
-			err = tx.Rollback(ctx)
-			if err != nil {
-				log.Error("unable to rollback transaction to create withdraw")
-				return fmt.Errorf("%w", err)
-			}
 			log.Error("unable to create order withdraw", err)
 			return fmt.Errorf("unable to create order withdraw: %w", err)
 		}
 		queryBalance := "UPDATE users SET balance=balance-$1 WHERE id=$2;"
 		_, err = tx.Exec(ctx, queryBalance, order.Withdraw, order.UserID)
 		if err != nil {
-			err = tx.Rollback(ctx)
-			if err != nil {
-				log.Error("unable to rollback transaction to update balance")
-				return fmt.Errorf("%w", err)
-			}
 			log.Error("unable to update balance")
 			return fmt.Errorf("unable to update balance: %w", err)
 		}
