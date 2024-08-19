@@ -82,16 +82,16 @@ func NewMwGzipper(log *slog.Logger) func(next http.Handler) http.Handler {
 			// проверяем, что клиент умеет получать от сервера сжатые данные в формате gzip
 			acceptEncoding := r.Header.Get("Accept-Encoding")
 			supportsGzip := strings.Contains(acceptEncoding, "gzip")
-			_ = supportsGzip
-			//if supportsGzip {
-			//	cw := newCompressWriter(w)
-			//
-			//	log.Info("body response coded",
-			//		slog.String("Accept-Encoding", acceptEncoding))
-			//
-			//	ow = cw //меняем стандартный Response
-			//	defer cw.Close()
-			//}
+			//_ = supportsGzip
+			if supportsGzip {
+				cw := newCompressWriter(w)
+
+				log.Info("body response coded",
+					slog.String("Accept-Encoding", acceptEncoding))
+
+				ow = cw //меняем стандартный Response
+				defer cw.Close()
+			}
 			// проверяем, что клиент отправил серверу сжатые данные в формате gzip
 			contentEncoding := r.Header.Get("Content-Encoding")
 			sendsGzip := strings.Contains(contentEncoding, "gzip")

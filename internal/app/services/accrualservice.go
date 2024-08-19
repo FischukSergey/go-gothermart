@@ -77,13 +77,13 @@ func processedAccrual(ctx context.Context, workPool chan struct{}, order OrderUp
 			continue
 
 		case http.StatusNoContent:
-			log.Info("accrual service http no content", "order", order.OrderID)
+			log.Info("accrual service http no content", slog.String("order", order.OrderID))
 			closeBody(res.Body, log)
 			return
 
 		case http.StatusTooManyRequests:
 			timeout := res.Header.Get("Retry-After")
-			log.Info("accrual service http retry timeout", timeout)
+			log.Info("accrual service http retry timeout", slog.String("timeout", timeout))
 			if timeout == "" {
 				timeout = "10"
 			}

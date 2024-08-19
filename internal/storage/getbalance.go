@@ -21,7 +21,7 @@ func (db *PostgresqlDB) GetUserBalance(ctx context.Context, userID int) (current
 	err = row.Scan(&current)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			log.Info("no balance for user", userID)
+			log.Info("no balance for user", slog.String("userID", strconv.Itoa(userID)))
 			return 0, 0, err
 		}
 		log.Error("error scanning row", slog.String("error", err.Error()))
@@ -33,7 +33,7 @@ func (db *PostgresqlDB) GetUserBalance(ctx context.Context, userID int) (current
 	err = row.Scan(&withdrawn)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			log.Info("no withdrawn for user", userID)
+			log.Info("no withdrawn for user", slog.String("userID", strconv.Itoa(userID)))
 			return 0, 0, err
 		}
 		log.Error("error scanning row", slog.String("error", err.Error()))

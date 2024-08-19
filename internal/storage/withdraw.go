@@ -45,7 +45,7 @@ func (db *PostgresqlDB) CreateOrderWithdraw(ctx context.Context, order models.Or
 	err = row.Scan(&balance)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			log.Info("no balance for user", order.UserID)
+			log.Info("no balance for user", slog.String("userID", strconv.Itoa(order.UserID)))
 			return errors.New("no balance for user")
 		}
 		log.Error("error scanning row", slog.String("error", err.Error()))

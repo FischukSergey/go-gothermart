@@ -31,13 +31,13 @@ func UserOrders(log *slog.Logger, storage UserOrdersGetter) http.HandlerFunc {
 		if err != nil { //ошибка работы БД
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Error("Error getting user orders: ", err)
-			render.JSON(w, r, map[string]string{"error": err.Error()})
+			//render.JSON(w, r, map[string]string{"error": err.Error()})
 			return
 		}
 		if len(orders) == 0 { //нет данных для ответа
 			w.WriteHeader(http.StatusNoContent)
 			log.Info("not found data for user")
-			render.JSON(w, r, "not found data for user")
+			//render.JSON(w, r, "not found data for user")
 			return
 		}
 

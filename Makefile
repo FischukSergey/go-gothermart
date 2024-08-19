@@ -18,6 +18,11 @@ accrual:
 	./cmd/accrual/accrual_darwin_arm64 -a=localhost:8082
 .PHONY: accrual
 
+test:
+				@echo "Running unit tests"
+				go test -race -v -count=1 -cover ./...
+.PHONY: test
+
 startdb:
 	@echo "Running PostgreSQL"
 	pg_ctl -D /usr/local/pgsql/data start
