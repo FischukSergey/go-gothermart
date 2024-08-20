@@ -52,7 +52,7 @@ func (db *PostgresqlDB) CreateOrderWithdraw(ctx context.Context, order models.Or
 	}
 
 	//получаем текущий баланс
-	row = db.DB.QueryRow(ctx, "SELECT balance FROM users WHERE id=$1", order.UserID)
+	row = db.DB.QueryRow(ctx, "SELECT balance FROM users WHERE id=$1 FOR UPDATE;", order.UserID)
 	var balance float32
 	err = row.Scan(&balance)
 	if err != nil {
