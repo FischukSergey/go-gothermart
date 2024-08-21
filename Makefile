@@ -20,7 +20,7 @@ accrual:
 
 test:
 				@echo "Running unit tests"
-				go test -race -v -count=1 -cover ./...
+				go test -race -count=1 -cover ./...
 .PHONY: test
 
 startdb:
