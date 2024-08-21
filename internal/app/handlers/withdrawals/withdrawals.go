@@ -35,7 +35,7 @@ func OrderWithdrawAll(log *slog.Logger, storage GetUserWithdrawAll) http.Handler
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
-			log.Error("Error creating order withdraw", logger.Err(err))
+			log.Error("Error found order withdraw", logger.Err(err))
 			return
 		}
 

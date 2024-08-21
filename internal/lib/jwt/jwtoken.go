@@ -1,30 +1,28 @@
 package jwtoken
 
 import (
+	"errors"
 	"github.com/FischukSergey/go-gothermart.git/internal/models"
 	"github.com/golang-jwt/jwt/v5"
 	"time"
 )
 
 const (
-	secretkey = "very-secret-key"
+	secretkey  = "very-secret-key"
+	ExpiresKey = 72
 )
-
-// Claims — структура утверждений, которая включает стандартные утверждения
-// и одно пользовательское — UserID
-//type Claims struct {
-//	jwt.RegisteredClaims
-//	Uid string `json:"uid"`
-//	Sub string `json:"sub"`
-//}
 
 // NewToken генерируем JWToken
 func NewToken(user models.User) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
-	claims["uid"] = user.ID
-	claims["email"] = user.Email
-	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
+	if user.ID > 0 && user.Email != "" {
+		claims["uid"] = user.ID
+		claims["email"] = user.Email
+		claims["exp"] = time.Now().Add(time.Hour * ExpiresKey).Unix()
+	} else {
+		return "", errors.New("can't create JWT, invalid user id or login")
+	}
 
 	tokenString, err := token.SignedString([]byte(secretkey))
 	if err != nil {
@@ -50,10 +48,6 @@ func GetJWTokenUserID(tokenString string) int {
 	}
 
 	userID := claims["uid"].(float64)
-	//id, err := strconv.Atoi(userID)
-	//if err != nil {
-	//	return -1
-	//}
 
 	return int(userID) //id
 }

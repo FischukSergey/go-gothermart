@@ -74,7 +74,7 @@ func LoginAuth(log *slog.Logger, storage Loginer) http.HandlerFunc {
 		cookie := &http.Cookie{
 			Name:    "token",
 			Value:   token,
-			Expires: time.Now().Add(72 * time.Hour),
+			Expires: time.Now().Add(jwtoken.ExpiresKey * time.Hour),
 		}
 		http.SetCookie(w, cookie)
 		w.WriteHeader(http.StatusOK)
