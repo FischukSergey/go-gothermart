@@ -8,7 +8,7 @@ import (
 	"log/slog"
 )
 
-// GetAccrualOrders выдает все заказы, сделанные пользователем id
+// GetAccrualOrders выдает все еще не обработанные заказы
 func (db *PostgresqlDB) GetAccrualOrders(ctx context.Context) ([]services.OrderUpdate, error) {
 	const op = "storage.GetAccrualOrders"
 	log := db.logger.With(
