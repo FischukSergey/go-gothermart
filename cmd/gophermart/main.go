@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -54,7 +55,11 @@ func main() {
 		return
 	}
 
-	defer storageDB.DB.Close()
+	defer func() {
+		storageDB.DB.Close()
+		log.Info("database closed")
+	}()
+
 	log.Info("database connection", slog.String("database", DatabaseDSN.Database))
 
 	rout.Route("/api/user", func(r chi.Router) {
@@ -74,14 +79,16 @@ func main() {
 	})
 
 	//инициализируем сервис и сервер расчета баллов (accrual)
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+
 	accrual := models.Accrual{
 		MaxWorker:            3,
 		TimeTicker:           5,
 		MaxRetries:           3,
 		AccrualServerAddress: FlagAccrualSystemAddress,
 	}
-	go services.AccrualService(ctx, accrual, storageDB, log)
+	var wg sync.WaitGroup
+	go services.AccrualService(ctx, accrual, storageDB, log, &wg)
 
 	srv := &http.Server{ //запускаем сервер
 		Addr:         FlagServerPort,
@@ -92,28 +99,30 @@ func main() {
 	}
 
 	log.Info("Initializing server")
-	done := make(chan os.Signal, 1)
-	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-
 	go func() {
 		if err := srv.ListenAndServe(); err != nil {
 			log.Error("Ошибка при запуске сервера", logger.Err(err))
 		}
 	}()
-
 	log.Info("Server started", slog.String("address", srv.Addr))
 
-	<-done
-
+	//Остановка процессов
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	<-done //ждем сигнал прерывания
+	//останавливаем сервер на прием новых запросов и дорабатываем принятые
 	log.Info("Server stopping", slog.String("address", srv.Addr))
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Error("failed to stop server", logger.Err(err))
 		return
 	}
+	log.Info("api server stopped")
 
-	// TODO: close storage. Разобраться!
-
-	log.Info("server stopped")
+	cancel()  //тормозим по контексту accrual сервис
+	wg.Wait() //дожидаемся отработки горутин воркера
+	time.Sleep(1 * time.Second)
+	log.Info("accrual server stopped")
+	//последним по defer закрываем базу данных
 }
 
 // setupLogger() настройка уровня доступа к логам из переменной среды

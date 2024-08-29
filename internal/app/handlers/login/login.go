@@ -43,10 +43,10 @@ func LoginAuth(log *slog.Logger, storage Loginer) http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
-		ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
-		defer cancel()
+		//ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+		//defer cancel()
 		//ищем в базе логин и пароль, в случае успеха получаем объект user
-		user, err := storage.Login(ctx, u.Email)
+		user, err := storage.Login(r.Context(), u.Email)
 
 		if err != nil {
 			log.Error("login or password failure", logger.Err(err))

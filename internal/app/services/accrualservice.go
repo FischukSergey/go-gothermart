@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -23,9 +24,11 @@ type AccrualServices interface {
 
 // AccrualService в фоновом режиме проводит запросы к микросервису начисления баллов лояльности
 // и обновляет данные в основном сервисе заказов
-func AccrualService(ctx context.Context, accrual models.Accrual, storage AccrualServices, log *slog.Logger) {
+func AccrualService(ctx context.Context, accrual models.Accrual, storage AccrualServices, log *slog.Logger, wg *sync.WaitGroup) {
 	workPool := make(chan struct{}, accrual.MaxWorker)
 	defer close(workPool)
+
+	//var wg sync.WaitGroup
 
 	log = log.With(slog.String("Service", "Accrual"))
 
@@ -45,8 +48,10 @@ func AccrualService(ctx context.Context, accrual models.Accrual, storage Accrual
 			}
 			for _, order := range orders {
 				workPool <- struct{}{}
+				wg.Add(1)
 				log.Info("Getting orders status and accrual for order " + order.OrderID)
-				go processedAccrual(ctx, workPool, order, storage, log, accrual)
+				go processedAccrual(ctx, workPool, order, storage, log, accrual, wg)
+				//time.Sleep(1 * time.Second)
 			}
 		case <-ctx.Done():
 			log.Info("Accrual service shutting down")
@@ -56,10 +61,14 @@ func AccrualService(ctx context.Context, accrual models.Accrual, storage Accrual
 }
 
 func processedAccrual(ctx context.Context, workPool chan struct{}, order OrderUpdate,
-	storage AccrualServices, log *slog.Logger, accrual models.Accrual) {
+	storage AccrualServices, log *slog.Logger, accrual models.Accrual, wg *sync.WaitGroup) {
 	defer func() {
 		<-workPool //освобождаем буфер для запуска следующей горутины по завершению работы функции
+		wg.Done()  //освобождаем счетчик работающих горутин
 	}()
+	//time.Sleep(3 * time.Second) //проверка работы wg.Wait
+	//TODO 1.Проработать замечания ментора. 2.Timeout на ответ сервиса Accrual?
+
 	uri := accrual.AccrualServerAddress + "/api/orders/" + order.OrderID
 
 	for retries := accrual.MaxRetries; retries > 0; retries-- { //делаем несколько попыток получить данные о заказе

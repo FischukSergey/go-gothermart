@@ -48,10 +48,10 @@ func OrderSave(log *slog.Logger, storage OrderSaver) http.HandlerFunc {
 			CreatedAt: time.Now().Format(time.RFC3339),
 		}
 
-		ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
-		defer cancel()
+		//ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+		//defer cancel()
 		//пишем заказ в базу и обрабатываем ошибку, если есть
-		err = storage.CreateOrder(ctx, order)
+		err = storage.CreateOrder(r.Context(), order)
 		if err != nil {
 			if errors.Is(err, models.ErrOrderUploadedSameUser) {
 				http.Error(w, err.Error(), http.StatusOK)

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/FischukSergey/go-gothermart.git/internal/app/services"
 	"github.com/FischukSergey/go-gothermart.git/internal/models"
+	"github.com/jackc/pgx/v5"
 	"log/slog"
 )
 
@@ -54,6 +55,9 @@ func (db *PostgresqlDB) UpdateAccrualOrder(ctx context.Context, order models.Acc
 		log.Error("unable to begin transaction")
 		return fmt.Errorf("%w", err)
 	}
+	defer func(tx pgx.Tx, ctx context.Context) {
+		_ = tx.Rollback(ctx)
+	}(tx, ctx)
 
 	//обновляем статус заказа
 	query := "UPDATE orders SET order_status=$1, accrual=$2 WHERE order_num=$3;"

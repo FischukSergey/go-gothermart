@@ -7,7 +7,6 @@ import (
 	"github.com/go-chi/render"
 	"log/slog"
 	"net/http"
-	"time"
 )
 
 type UserOrdersGetter interface {
@@ -24,10 +23,10 @@ func UserOrders(log *slog.Logger, storage UserOrdersGetter) http.HandlerFunc {
 
 		var orders []models.GetUserOrders
 
-		ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
-		defer cancel()
+		//ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+		//defer cancel()
 		//получаем ордера из базы и обрабатываем ошибку, если есть
-		orders, err := storage.GetUserOrders(ctx, userID)
+		orders, err := storage.GetUserOrders(r.Context(), userID)
 		if err != nil { //ошибка работы БД
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Error("Error getting user orders: ", err)

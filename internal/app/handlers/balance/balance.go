@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
-	"time"
 )
 
 type Balancer interface {
@@ -28,12 +27,12 @@ func GetBalance(log *slog.Logger, storage Balancer) http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		userID := r.Context().Value(auth.CtxKeyUser).(int)
 
-		ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
-		defer cancel()
+		//ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second) //Обходимся Write,Read Timeout при запуске сервера
+		//defer cancel()
 		//пишем заказ в базу и обрабатываем ошибку, если есть
 		var resp response
 		var err error
-		resp.Current, resp.Withdrawn, err = storage.GetUserBalance(ctx, userID)
+		resp.Current, resp.Withdrawn, err = storage.GetUserBalance(r.Context(), userID)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Error("Error getting balance and withdrawn: ", err)

@@ -62,11 +62,11 @@ func Register(log *slog.Logger, storage UserRegister) http.HandlerFunc {
 
 		u.EncryptedPassword = string(passHash)
 
-		ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
-		defer cancel()
+		//ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+		//defer cancel()
 
 		//вызываем метод записи в БД
-		id, err := storage.Register(ctx, u)
+		id, err := storage.Register(r.Context(), u)
 		//обработка ошибки вставки уже существующего Login (email)
 		var res []string
 		if errors.Is(err, models.ErrUserExists) {

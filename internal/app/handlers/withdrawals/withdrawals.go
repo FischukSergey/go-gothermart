@@ -9,7 +9,6 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
-	"time"
 )
 
 type GetUserWithdrawAll interface {
@@ -26,12 +25,12 @@ func OrderWithdrawAll(log *slog.Logger, storage GetUserWithdrawAll) http.Handler
 		w.Header().Set("Content-Type", "application/json")
 		userID := r.Context().Value(auth.CtxKeyUser).(int)
 
-		ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
-		defer cancel()
+		//ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+		//defer cancel()
 		//пишем заказ в базу и обрабатываем ошибку, если есть
 		var err error
 		var resp []models.GetAllWithdraw
-		resp, err = storage.GetAllWithdraw(ctx, userID)
+		resp, err = storage.GetAllWithdraw(r.Context(), userID)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
